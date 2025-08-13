@@ -1,6 +1,3 @@
-import sys
-import json
-import re
 import configparser
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
@@ -30,34 +27,3 @@ def pii_recognition(value):
 
     print("Redacted Text: {}".format(response[0].redacted_text))
     return response[0].redacted_text if response and not response[0].is_error else value
-
-# マスキング処理
-def mask_value(value, key=None):    
-    if isinstance(value, str):
-        if key in ('displayName', 'mentionText', 'content'):
-            return pii_recognition(value)
-        else:
-            value = re.sub(r'[0-9a-fA-F\-]{36}', '*****', value)
-            return value
-    else:
-        return value
-
-def mask_dict(d):
-    mask_keys = ['id', 'displayName', 'userIdentityType', 'mentionText', 'content']
-    if isinstance(d, dict):
-        return {k: mask_dict(v) if isinstance(v, (dict, list)) else (mask_value(v, k) if k in mask_keys else v) for k, v in d.items()}
-    elif isinstance(d, list):
-        return [mask_dict(item) for item in d]
-    else:
-        return d
-
-if __name__ == "__main__":
-    source = sys.argv[1] if len(sys.argv) > 1 else 'testdata/testdata.json'
-
-    with open(source, encoding='utf-8') as f:
-        data = json.load(f)
-
-    masked_data = mask_dict(data)
-
-    with open(f'{source}_redacted', 'w', encoding='utf-8') as f:
-        json.dump(masked_data, f, ensure_ascii=False, indent=2)

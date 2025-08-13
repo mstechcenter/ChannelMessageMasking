@@ -1,2 +1,4 @@
 config.ini.*
 testdata/
+venv/
+__pycache__/
